@@ -7,7 +7,16 @@ void System_Processes(){
       else if(temperature<temperatureFan){fanStatus=0;}                //Turn off fan when set fan temp reached
       digitalWrite(FAN,fanStatus);                                     //Send a digital signal to the fan MOSFET
     }
-    else{}                                                             //DYNAMIC PWM COOLING MODE (3-PIN FAN - coming soon)
+    else{      
+      fanPWM=min(
+                255,
+                max(
+                   0,
+                   (int)( 255*(temperature-temperatureFan)/(temperatureFanMax-temperatureFan))
+                 )
+             );
+      ledcWrite(fanpwmChannel,fanPWM);
+    }                                                             	   //DYNAMIC PWM COOLING MODE (3-PIN FAN)
   }
   else{digitalWrite(FAN,LOW);}                                         //Fan Disabled
   
@@ -59,6 +68,7 @@ void loadSettings(){
   enableWiFi         = EEPROM.read(10);                      // Load saved WiFi enable settings  
   flashMemLoad       = EEPROM.read(11);                      // Load saved flash memory autoload feature
   backlightSleepMode = EEPROM.read(13);                      // Load saved lcd backlight sleep timer
+  temperatureFanMax  = EEPROM.read(14);                      // Load saved lcd backlight sleep timer
 }
 
 void saveSettings(){
@@ -82,6 +92,7 @@ void saveSettings(){
   EEPROM.write(10,enableWiFi);         //STORE: Enable WiFi
 //EEPROM.write(11,flashMemLoad);       //STORE: Enable autoload (must be excluded from bulk save, uncomment under discretion)
   EEPROM.write(13,backlightSleepMode); //STORE: LCD backlight sleep timer 
+  EEPROM.write(14,temperatureFanMax); //STORE: LCD backlight sleep timer 
   EEPROM.commit();                     //Saves setting changes to flash memory
 }
 void saveAutoloadSettings(){

@@ -78,13 +78,35 @@ firmwareContactR2 = "TechBuilder     ";
 #include <SPI.h>                    //SYSTEM PARAMETER  - SPI Library (By: Arduino)
 #include <WiFi.h>                   //SYSTEM PARAMETER  - WiFi Library (By: Arduino)
 #include <WiFiClient.h>             //SYSTEM PARAMETER  - WiFi Library (By: Arduino)
-#include <BlynkSimpleEsp32.h>       //SYSTEM PARAMETER  - Blynk WiFi Library For Phone App 
 #include <LiquidCrystal_I2C.h>      //SYSTEM PARAMETER  - ESP32 LCD Compatible Library (By: Robojax)
 #include <Adafruit_ADS1X15.h>       //SYSTEM PARAMETER  - ADS1115/ADS1015 ADC Library (By: Adafruit)
 LiquidCrystal_I2C lcd(0x27,16,2);   //SYSTEM PARAMETER  - Configure LCD RowCol Size and I2C Address
 TaskHandle_t Core2;                 //SYSTEM PARAMETER  - Used for the ESP32 dual core operation
-Adafruit_ADS1015 ads;               //SYSTEM PARAMETER  - ADS1015 ADC Library (By: Adafruit) Kindly delete this line if you are using ADS1115
-//Adafruit_ADS1115 ads;             //SYSTEM PARAMETER  - ADS1115 ADC Library (By: Adafruit) Kindly uncomment this if you are using ADS1115
+// Adafruit_ADS1015 ads;               //SYSTEM PARAMETER  - ADS1015 ADC Library (By: Adafruit) Kindly delete this line if you are using ADS1115
+Adafruit_ADS1115 ads;             //SYSTEM PARAMETER  - ADS1115 ADC Library (By: Adafruit) Kindly uncomment this if you are using ADS1115
+
+// Bluetooth Low Energy
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
+
+BLEServer* pServer = NULL;
+BLECharacteristic* pCharacteristic_JSON = NULL;
+
+bool deviceConnected = false;
+bool oldDeviceConnected = false;
+uint32_t value = 0;
+
+class MyServerCallbacks: public BLEServerCallbacks {
+    void onConnect(BLEServer* pServer) {
+      deviceConnected = true;
+    };
+
+    void onDisconnect(BLEServer* pServer) {
+      deviceConnected = false;
+    }
+};
 
 //====================================== USER PARAMETERS ===========================================//
 // The parameters below are the default parameters used when the MPPT charger settings have not     //
@@ -105,13 +127,11 @@ Adafruit_ADS1015 ads;               //SYSTEM PARAMETER  - ADS1015 ADC Library (B
 
 //========================================= WiFi SSID ==============================================//
 // This MPPT firmware uses the Blynk phone app and arduino library for controls and data telemetry  //
-// Fill in your WiFi SSID and password. You will also have to get your own authentication token     //
-// from email after registering from the Blynk platform.                                            //
+// Fill in your WiFi SSID and password.                                                             //
 //==================================================================================================//
 char 
-auth[] = "InputBlynkAuthenticationToken",   //   USER PARAMETER - Input Blynk Authentication Token (From email after registration)
-ssid[] = "InputWiFiSSID",                   //   USER PARAMETER - Enter Your WiFi SSID
-pass[] = "InputWiFiPassword";               //   USER PARAMETER - Enter Your WiFi Password
+ssid[] = "MM",                   //   USER PARAMETER - Enter Your WiFi SSID
+pass[] = "katrinsnetz";               //   USER PARAMETER - Enter Your WiFi Password
 
 //====================================== USER PARAMETERS ==========================================//
 // The parameters below are the default parameters used when the MPPT charger settings have not    //
@@ -127,14 +147,17 @@ enableWiFi              = 1,           //   USER PARAMETER - Enable WiFi Connect
 enableFan               = 1,           //   USER PARAMETER - Enable Cooling Fan
 enableBluetooth         = 1,           //   USER PARAMETER - Enable Bluetooth Connection
 enableLCD               = 1,           //   USER PARAMETER - Enable LCD display
-enableLCDBacklight      = 1,           //   USER PARAMETER - Enable LCD display's backlight
+enableLCDBacklight      = 0,           //   USER PARAMETER - Enable LCD display's backlight
 overrideFan             = 0,           //   USER PARAMETER - Fan always on
-enableDynamicCooling    = 0;           //   USER PARAMETER - Enable for PWM cooling control 
+enableDynamicCooling    = 1;           //   USER PARAMETER - Enable for PWM cooling control 
 int
+fanPWMFrequency         = 25000,        //  USER PARAMETER - Fan PWM frequency for dynamic cooling mode
 serialTelemMode         = 1,           //  USER PARAMETER - Selects serial telemetry data feed (0 - Disable Serial, 1 - Display All Data, 2 - Display Essential, 3 - Number only)
 pwmResolution           = 11,          //  USER PARAMETER - PWM Bit Resolution 
 pwmFrequency            = 39000,       //  USER PARAMETER - PWM Switching Frequency - Hz (For Buck)
-temperatureFan          = 60,          //  USER PARAMETER - Temperature threshold for fan to turn on
+temperatureFan          = 40,          //  USER PARAMETER - Temperature threshold for fan to turn on
+temperatureFanMax       = 60,          //  USER PARAMETER - Temperature over temperatureFan for 100% pwm
+fanPWM                  = 0,
 temperatureMax          = 90,          //  USER PARAMETER - Overtemperature, System Shudown When Exceeded (deg C)
 telemCounterReset       = 0,           //  USER PARAMETER - Reset Telem Data Every (0 = Never, 1 = Day, 2 = Week, 3 = Month, 4 = Year) 
 errorTimeLimit          = 1000,        //  USER PARAMETER - Time interval for reseting error counter (milliseconds)  
@@ -144,14 +167,15 @@ millisSerialInterval    = 1,           //  USER PARAMETER - Time Interval Refres
 millisLCDInterval       = 1000,        //  USER PARAMETER - Time Interval Refresh Rate For LCD Display (ms)
 millisWiFiInterval      = 2000,        //  USER PARAMETER - Time Interval Refresh Rate For WiFi Telemetry (ms)
 millisLCDBackLInterval  = 2000,        //  USER PARAMETER - Time Interval Refresh Rate For WiFi Telemetry (ms)
-backlightSleepMode      = 0,           //  USER PARAMETER - 0 = Never, 1 = 10secs, 2 = 5mins, 3 = 1hr, 4 = 6 hrs, 5 = 12hrs, 6 = 1 day, 7 = 3 days, 8 = 1wk, 9 = 1month
-baudRate                = 500000;      //  USER PARAMETER - USB Serial Baud Rate (bps)
+backlightSleepMode      = 10,           //  USER PARAMETER - 0 = Never, 1 = 10secs, 2 = 5mins, 3 = 1hr, 4 = 6 hrs, 5 = 12hrs, 6 = 1 day, 7 = 3 days, 8 = 1wk, 9 = 1month
+baudRate                = 115200,      //  USER PARAMETER - USB Serial Baud Rate (bps)
+bluetoothUpdateMS       = 3000;        //  USER PARAMETER - BLE notification frequency
 
 float 
-voltageBatteryMax       = 27.3000,     //   USER PARAMETER - Maximum Battery Charging Voltage (Output V)
-voltageBatteryMin       = 22.4000,     //   USER PARAMETER - Minimum Battery Charging Voltage (Output V)
+voltageBatteryMax       = 2*13.80,     //   USER PARAMETER - Maximum Battery Charging Voltage (Output V)
+voltageBatteryMin       = 2*10.5000,     //   USER PARAMETER - Minimum Battery Charging Voltage (Output V)
 currentCharging         = 30.0000,     //   USER PARAMETER - Maximum Charging Current (A - Output)
-electricalPrice         = 9.5000;      //   USER PARAMETER - Input electrical price per kWh (Dollar/kWh,Euro/kWh,Peso/kWh)
+electricalPrice         = 26.000;      //   USER PARAMETER - Input electrical price per kWh (Dollar/kWh,Euro/kWh,Peso/kWh)
 
 
 //================================== CALIBRATION PARAMETERS =======================================//
@@ -160,28 +184,27 @@ electricalPrice         = 9.5000;      //   USER PARAMETER - Input electrical pr
 // MPPT charge controllers designed by TechBuilder (Angelo S. Casimiro)                            //
 //=================================================================================================//
 bool
-ADS1015_Mode            = 1;          //  CALIB PARAMETER - Use 1 for ADS1015 ADC model use 0 for ADS1115 ADC model
+ADS1015_Mode            = 0;          //  CALIB PARAMETER - Use 1 for ADS1015 ADC model use 0 for ADS1115 ADC model
 int
 ADC_GainSelect          = 2,          //  CALIB PARAMETER - ADC Gain Selection (0→±6.144V 3mV/bit, 1→±4.096V 2mV/bit, 2→±2.048V 1mV/bit)
 avgCountVS              = 3,          //  CALIB PARAMETER - Voltage Sensor Average Sampling Count (Recommended: 3)
 avgCountCS              = 4,          //  CALIB PARAMETER - Current Sensor Average Sampling Count (Recommended: 4)
-avgCountTS              = 500;        //  CALIB PARAMETER - Temperature Sensor Average Sampling Count
+avgCountTS              = 50;        //  CALIB PARAMETER - Temperature Sensor Average Sampling Count
 float
-inVoltageDivRatio       = 40.2156,    //  CALIB PARAMETER - Input voltage divider sensor ratio (change this value to calibrate voltage sensor)
-outVoltageDivRatio      = 24.5000,    //  CALIB PARAMETER - Output voltage divider sensor ratio (change this value to calibrate voltage sensor)
+inVoltageDivRatio       = 39.77,    //  CALIB PARAMETER - Input voltage divider sensor ratio (change this value to calibrate voltage sensor)
+outVoltageDivRatio      = 24.192,    //  CALIB PARAMETER - Output voltage divider sensor ratio (change this value to calibrate voltage sensor)
 vOutSystemMax           = 50.0000,    //  CALIB PARAMETER - 
 cOutSystemMax           = 50.0000,    //  CALIB PARAMETER - 
 ntcResistance           = 10000.00,   //  CALIB PARAMETER - NTC temp sensor's resistance. Change to 10000.00 if you are using a 10k NTC
 voltageDropout          = 1.0000,     //  CALIB PARAMETER - Buck regulator's dropout voltage (DOV is present due to Max Duty Cycle Limit)
-voltageBatteryThresh    = 1.5000,     //  CALIB PARAMETER - Power cuts-off when this voltage is reached (Output V)
+voltageBatteryThresh    = 0.3000,     //  CALIB PARAMETER - Power cuts-off when this voltage is reached (Output V)
 currentInAbsolute       = 31.0000,    //  CALIB PARAMETER - Maximum Input Current The System Can Handle (A - Input)
 currentOutAbsolute      = 50.0000,    //  CALIB PARAMETER - Maximum Output Current The System Can Handle (A - Input)
 PPWM_margin             = 99.5000,    //  CALIB PARAMETER - Minimum Operating Duty Cycle for Predictive PWM (%)
 PWM_MaxDC               = 97.0000,    //  CALIB PARAMETER - Maximum Operating Duty Cycle (%) 90%-97% is good
 efficiencyRate          = 1.0000,     //  CALIB PARAMETER - Theroretical Buck Efficiency (% decimal)
-currentMidPoint         = 2.5250,     //  CALIB PARAMETER - Current Sensor Midpoint (V)
-currentSens             = 0.0000,     //  CALIB PARAMETER - Current Sensor Sensitivity (V/A)
-currentSensV            = 0.0660,     //  CALIB PARAMETER - Current Sensor Sensitivity (mV/A)
+currentMidPoint         = 2.490,     //  CALIB PARAMETER - Current Sensor Midpoint (V)
+currentSensV            = 0.0458,     //  CALIB PARAMETER - Current Sensor Sensitivity (mV/A)
 vInSystemMin            = 10.000;     //  CALIB PARAMETER - 
 
 //===================================== SYSTEM PARAMETERS =========================================//
@@ -222,13 +245,13 @@ OTE                   = 0;           // SYSTEM PARAMETER -
 int
 inputSource           = 0,           // SYSTEM PARAMETER - 0 = MPPT has no power source, 1 = MPPT is using solar as source, 2 = MPPTis using battery as power source
 avgStoreTS            = 0,           // SYSTEM PARAMETER - Temperature Sensor uses non invasive averaging, this is used an accumulator for mean averaging
-temperature           = 0,           // SYSTEM PARAMETER -
 sampleStoreTS         = 0,           // SYSTEM PARAMETER - TS AVG nth Sample
 pwmMax                = 0,           // SYSTEM PARAMETER -
 pwmMaxLimited         = 0,           // SYSTEM PARAMETER -
 PWM                   = 0,           // SYSTEM PARAMETER -
 PPWM                  = 0,           // SYSTEM PARAMETER -
 pwmChannel            = 0,           // SYSTEM PARAMETER -
+fanpwmChannel         = 2,
 batteryPercent        = 0,           // SYSTEM PARAMETER -
 errorCount            = 0,           // SYSTEM PARAMETER -
 menuPage              = 0,           // SYSTEM PARAMETER -
@@ -238,6 +261,7 @@ conv1                 = 0,           // SYSTEM PARAMETER -
 conv2                 = 0,           // SYSTEM PARAMETER -
 intTemp               = 0;           // SYSTEM PARAMETER -
 float
+temperature           = 0,           // SYSTEM PARAMETER -
 VSI                   = 0.0000,      // SYSTEM PARAMETER - Raw input voltage sensor ADC voltage
 VSO                   = 0.0000,      // SYSTEM PARAMETER - Raw output voltage sensor ADC voltage
 CSI                   = 0.0000,      // SYSTEM PARAMETER - Raw current sensor ADC voltage
@@ -325,6 +349,13 @@ void setup() {
   ledcWrite(pwmChannel,PWM);                                 //Write PWM value at startup (duty = 0)
   pwmMax = pow(2,pwmResolution)-1;                           //Get PWM Max Bit Ceiling
   pwmMaxLimited = (PWM_MaxDC*pwmMax)/100.000;                //Get maximum PWM Duty Cycle (pwm limiting protection)
+
+  // FAN PWM INITIALIZATION
+  if (enableDynamicCooling) {
+    ledcSetup(fanpwmChannel,fanPWMFrequency,8);
+    ledcAttachPin(FAN,fanpwmChannel);
+    ledcWrite(pwmChannel,255);
+  }
   
   //ADC INITIALIZATION
   ADC_SetGain();                                             //Sets ADC Gain & Range
@@ -360,6 +391,7 @@ void setup() {
 
 }
 //================== CORE1: LOOP (DUAL CORE MODE) ======================//
+
 void loop() {
   Read_Sensors();         //TAB#2 - Sensor data measurement and computation
   Device_Protection();    //TAB#3 - Fault detection algorithm  
@@ -367,4 +399,34 @@ void loop() {
   Charging_Algorithm();   //TAB#5 - Battery Charging Algorithm                    
   Onboard_Telemetry();    //TAB#6 - Onboard telemetry (USB & Serial Telemetry)
   LCD_Menu();             //TAB#8 - Low Power Algorithm
+
+  while (Serial.available() > 0) {
+    char c=Serial.read();
+    if (c == 'R') { // Reset
+      flashMemLoad=0;
+      saveAutoloadSettings();
+      Serial.println("RESET");
+      ESP.restart();
+    }
+    if (c == 'S') { // Save
+      flashMemLoad=1;
+      saveAutoloadSettings();
+      saveSettings();
+      Serial.println("flashMemLoad=1");
+    }    
+    if (c == '?') { // Show current settings
+        Serial.println("Settings:");
+        Serial.println("MPPT_Mode: ");  Serial.println(MPPT_Mode);
+        Serial.print("output_Mode:");  Serial.println(output_Mode);
+        Serial.print("voltageBatteryMax:");  Serial.println(voltageBatteryMax);
+        Serial.print("voltageBatteryMin:");  Serial.println(voltageBatteryMin);
+        Serial.print("voltageBatteryThresh:");  Serial.println(voltageBatteryThresh);
+        Serial.print("currentCharging:");  Serial.println(currentCharging);
+        Serial.print("enableFan:");  Serial.println(enableFan);
+        Serial.print("temperatureFan:");  Serial.println(temperatureFan);
+        Serial.print("temperatureMax :");  Serial.println(temperatureMax );
+        Serial.print("enableWiFi:");  Serial.println(enableWiFi);
+        Serial.print("backlightSleepMode:");  Serial.println(backlightSleepMode);
+    }
+  }
 }

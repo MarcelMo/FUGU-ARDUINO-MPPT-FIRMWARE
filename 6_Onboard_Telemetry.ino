@@ -13,32 +13,33 @@ void Onboard_Telemetry(){
     if(serialTelemMode==0){}
 //  else if(chargingPause==1){Serial.println("CHARGING PAUSED");}   // Charging paused message
     else if(serialTelemMode==1){                                    // 1 - Display All                           
-      Serial.print(" ERR:");   Serial.print(ERR);
-      Serial.print(" FLV:");   Serial.print(FLV);  
-      Serial.print(" BNC:");   Serial.print(BNC);  
-      Serial.print(" IUV:");   Serial.print(IUV); 
-      Serial.print(" IOC:");   Serial.print(IOC); 
-      Serial.print(" OOV:");   Serial.print(OOV); 
-      Serial.print(" OOC:");   Serial.print(OOC);
-      Serial.print(" OTE:");   Serial.print(OTE); 
-      Serial.print(" REC:");   Serial.print(REC);
-      Serial.print(" MPPTA:"); Serial.print(MPPT_Mode);     
-      Serial.print(" CM:");    Serial.print(output_Mode);   //Charging Mode
+      if(chargingPause==1){Serial.println("CHARGING PAUSED");}   // Charging paused message
+      Serial.print(" ERR:");   Serial.print(ERR);   // Error count
+      Serial.print(" FLV:");   Serial.print(FLV);   // Fatally low voltage
+      Serial.print(" BNC:");   Serial.print(BNC);   // Battery not connected
+      Serial.print(" IUV:");   Serial.print(IUV);   // Input undervoltage
+      Serial.print(" IOC:");   Serial.print(IOC);   // Input overvoltage
+      Serial.print(" OOV:");   Serial.print(OOV);   // Output overvoltage
+      Serial.print(" OOC:");   Serial.print(OOC);   // Output overcurrent
+      Serial.print(" OTE:");   Serial.print(OTE);   // Overtemperature
+      Serial.print(" REC:");   Serial.print(REC);   // Recovery
+      Serial.print(" MPPTA:"); Serial.print(MPPT_Mode);     // MPPT mode enabled
+      Serial.print(" CM:");    Serial.print(output_Mode);   // Charging mode enabled
       
       Serial.print(" "); 
-      Serial.print(" BYP:");   Serial.print(bypassEnable);
+      Serial.print(" BYP:");   Serial.print(bypassEnable);  // Bypass enabled
       Serial.print(" EN:");    Serial.print(buckEnable);
       Serial.print(" FAN:");   Serial.print(fanStatus);    
       Serial.print(" WiFi:");  Serial.print(WIFI);      
       Serial.print(" ");  
-      Serial.print(" PI:");    Serial.print(powerInput,0); 
+      Serial.print(" PI:");    Serial.print(powerInput,1); 
       Serial.print(" PWM:");   Serial.print(PWM); 
       Serial.print(" PPWM:");  Serial.print(PPWM); 
-      Serial.print(" VI:");    Serial.print(voltageInput,1); 
-      Serial.print(" VO:");    Serial.print(voltageOutput,1); 
-      Serial.print(" CI:");    Serial.print(currentInput,2); 
-      Serial.print(" CO:");    Serial.print(currentOutput,2); 
-      Serial.print(" Wh:");    Serial.print(Wh,2); 
+      Serial.print(" VI:");    Serial.print(voltageInput,3); 
+      Serial.print(" VO:");    Serial.print(voltageOutput,3); 
+      Serial.print(" CI:");    Serial.print(currentInput,3); 
+      Serial.print(" CO:");    Serial.print(currentOutput,3); 
+      Serial.print(" Wh:");    Serial.print(Wh,3); 
       Serial.print(" Temp:");  Serial.print(temperature,1);  
       Serial.print(" "); 
       Serial.print(" CSMPV:"); Serial.print(currentMidPoint,3);  
@@ -50,13 +51,13 @@ void Onboard_Telemetry(){
       Serial.println("");    
     }
     else if(serialTelemMode==2){ // 2 - Display Essential Data
-      Serial.print(" PI:");    Serial.print(powerInput,0); 
+      Serial.print(" PI:");    Serial.print(powerInput,1); 
       Serial.print(" PWM:");   Serial.print(PWM); 
       Serial.print(" PPWM:");  Serial.print(PPWM); 
-      Serial.print(" VI:");    Serial.print(voltageInput,1); 
-      Serial.print(" VO:");    Serial.print(voltageOutput,1); 
-      Serial.print(" CI:");    Serial.print(currentInput,2); 
-      Serial.print(" CO:");    Serial.print(currentOutput,2); 
+      Serial.print(" VI:");    Serial.print(voltageInput,2); 
+      Serial.print(" VO:");    Serial.print(voltageOutput,2); 
+      Serial.print(" CI:");    Serial.print(currentInput,3); 
+      Serial.print(" CO:");    Serial.print(currentOutput,3); 
       Serial.print(" Wh:");    Serial.print(Wh,2); 
       Serial.print(" Temp:");  Serial.print(temperature,1);  
       Serial.print(" EN:");    Serial.print(buckEnable);

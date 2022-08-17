@@ -1,7 +1,53 @@
-void lcdBacklight_Wake(){
+#define MENU_PAGE_SUPPLY_ALGORYTHM 0
+#define MENU_PAGE_MODE 1
+#define MENU_PAGE_MAX_BATTERY 2
+#define MENU_PAGE_MIN_BATTERY 3
+#define MENU_PAGE_CHARGING_CURRENT 4
+#define MENU_PAGE_FAN_ENABLE 5
+#define MENU_PAGE_FAN_LOW_TEMP 6
+#define MENU_PAGE_FAN_HIGH_TEMP 7
+#define MENU_PAGE_SHUTDOWN_TEMP 8
+#define MENU_PAGE_WIFI 9
+#define MENU_PAGE_AUTOLOAD 10
+#define MENU_PAGE_BACKLIGHT_SLEEP 111
+#define MENU_PAGE_FACTORY_RESET 12
+#define MENU_PAGE_FIRMWARE 13
+#define MENU_PAGE_MAXIMUM 13
+
+bool displaySleeping = false;
+boolean lcdBacklight_Wake(){
+  if (displaySleeping) {
     lcd.setBacklight(HIGH);
     prevLCDBackLMillis = millis();
+    displaySleeping=false;
+    return(true);
+  } else {
+    return(false);
+  }
 }
+
+int waitForRelease = 0;
+bool keyDown(int button) {
+  if (waitForRelease!=0) { // Waiting for keyup ?
+    if (digitalRead(waitForRelease)==1) { // Still pressed ?
+      return(false);
+    } else {                              // Continue normal operation
+      waitForRelease=0;
+    }
+  }
+  bool isPressed = digitalRead(button)==1;
+  if (isPressed) {
+    waitForRelease = button;
+    return(!lcdBacklight_Wake());
+  } else {
+    return(false);
+  }
+}
+
+bool keyHold(int button) {
+  return(digitalRead(button)==1);
+}
+
 void lcdBacklight(){
   unsigned long backLightInterval;
   if(backlightSleepMode==0){prevLCDBackLMillis = millis();}                 //Set backlight var to sleep never
@@ -121,14 +167,11 @@ void LCD_Menu(){
     chargingPause = 1;
 
     //BUTTON KEYPRESS
-    if(setMenuPage==0){
-      if(digitalRead(buttonRight)==1){subMenuPage++;}
-      if(digitalRead(buttonLeft)==1) {subMenuPage--;}
-      if(digitalRead(buttonBack)==1) {settingMode=0;subMenuPage=0;}  //bool engage, main menu int page
-      if(digitalRead(buttonSelect)==1){setMenuPage=1;} //enter sub menu settings - bool engage 
-      lcdBacklight_Wake();
-      while(digitalRead(buttonRight)==1||digitalRead(buttonLeft)==1    
-      ||digitalRead(buttonBack)==1||digitalRead(buttonSelect)==1){}
+    if(setMenuPage==MENU_PAGE_SUPPLY_ALGORYTHM){
+      if(keyDown(buttonRight)){subMenuPage++;}
+      if(keyDown(buttonLeft)) {subMenuPage--;}
+      if(keyDown(buttonBack)) {settingMode=0;subMenuPage=0;}  //bool engage, main menu int page
+      if(keyDown(buttonSelect)){setMenuPage=1;} //enter sub menu settings - bool engage 
     } 
     //SUB MENU PAGE CYCLING
     if(subMenuPage>subMenuPages){subMenuPage=0;}                     
@@ -145,17 +188,16 @@ void LCD_Menu(){
       //SET MENU - BOOLTYPE
       if(setMenuPage==0){boolTemp = MPPT_Mode;}
       else{
-        if(digitalRead(buttonRight)==1||digitalRead(buttonLeft)==1){
-          while(digitalRead(buttonRight)==1||digitalRead(buttonLeft)==1){}
+        if(keyDown(buttonRight)||keyDown(buttonLeft)){
           if(MPPT_Mode==1){MPPT_Mode=0;}else{MPPT_Mode=1;}
         }
-        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}MPPT_Mode = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
-        if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){}saveSettings();setMenuPage=0;savedMessageLCD();}
+        if(keyDown(buttonBack)){MPPT_Mode = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(keyDown(buttonSelect)){saveSettings();setMenuPage=0;savedMessageLCD();}
       }     
     }
 
     ///// SETTINGS MENU ITEM: CHARER/PSU MODE /////
-    else if(subMenuPage==1){
+    else if(subMenuPage==MENU_PAGE_MODE){
       lcd.setCursor(0,0);lcd.print("CHARGER/PSU MODE");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -165,18 +207,17 @@ void LCD_Menu(){
       //SET MENU - BOOLTYPE
       if(setMenuPage==0){boolTemp = output_Mode;}
       else{
-        if(digitalRead(buttonRight)==1||digitalRead(buttonLeft)==1){
-          while(digitalRead(buttonRight)==1||digitalRead(buttonLeft)==1){}
+        if(keyDown(buttonRight)||keyDown(buttonLeft)){
           if(output_Mode==1){output_Mode=0;}else{output_Mode=1;}
         }
-        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}output_Mode = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
-        if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){}saveSettings();setMenuPage=0;savedMessageLCD();}
+        if(keyDown(buttonBack)){output_Mode = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(keyDown(buttonSelect)){saveSettings();setMenuPage=0;savedMessageLCD();}
       }     
     }
 
     
     ///// SETTINGS MENU ITEM: MAX BATTERY V /////
-    else if(subMenuPage==2){
+    else if(subMenuPage==MENU_PAGE_MAX_BATTERY){
       lcd.setCursor(0,0);lcd.print("MAX BATTERY V   ");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -186,11 +227,11 @@ void LCD_Menu(){
       //SET MENU - FLOATTYPE
       if(setMenuPage==0){floatTemp = voltageBatteryMax;}
       else{
-        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}voltageBatteryMax = floatTemp;cancelledMessageLCD();setMenuPage=0;} 
-        if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){}saveSettings();setMenuPage=0;savedMessageLCD();}     
+        if(keyDown(buttonBack)){voltageBatteryMax = floatTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(keyDown(buttonSelect)){saveSettings();setMenuPage=0;savedMessageLCD();}     
         currentMenuSetMillis = millis();
-        if(digitalRead(buttonRight)==1){                                                    //Right button press (increments setting values)
-          while(digitalRead(buttonRight)==1){
+        if(keyDown(buttonRight)){                                                    //Right button press (increments setting values)
+          while(keyHold(buttonRight)){
             if(millis()-currentMenuSetMillis>longPressTime){                                //Long Press     
               voltageBatteryMax += 1.00;                                                    //Increment by 1
               voltageBatteryMax = constrain(voltageBatteryMax,vOutSystemMin,vOutSystemMax); //Limit settings values to a range
@@ -204,8 +245,8 @@ void LCD_Menu(){
             lcd.print("V   ");                                                              //Display unit
           } 
         }
-        else if(digitalRead(buttonLeft)==1){                                                //Left button press (decrements setting values)
-          while(digitalRead(buttonLeft)==1){
+        else if(keyDown(buttonLeft)){                                                //Left button press (decrements setting values)
+          while(keyHold(buttonLeft)){
             if(millis()-currentMenuSetMillis>longPressTime){                                //Long Press     
               voltageBatteryMax -= 1.00;                                                    //Increment by 1
               voltageBatteryMax = constrain(voltageBatteryMax,vOutSystemMin,vOutSystemMax); //Limit settings values to a range
@@ -222,7 +263,7 @@ void LCD_Menu(){
       }    
     }
     ///// SETTINGS MENU ITEM: MIN BATTERY V /////
-    else if(subMenuPage==3){
+    else if(subMenuPage==MENU_PAGE_MIN_BATTERY){
       lcd.setCursor(0,0);lcd.print("MIN BATTERY V   ");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -232,11 +273,11 @@ void LCD_Menu(){
       //SET MENU - FLOATTYPE
       if(setMenuPage==0){floatTemp = voltageBatteryMin;}
       else{
-        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}voltageBatteryMin = floatTemp;cancelledMessageLCD();setMenuPage=0;} 
-        if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){}saveSettings();setMenuPage=0;savedMessageLCD();}     
+        if(keyDown(buttonBack)){while(keyHold(buttonBack)){}voltageBatteryMin = floatTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(keyDown(buttonSelect)==1){while(keyHold(buttonSelect)){}saveSettings();setMenuPage=0;savedMessageLCD();}     
         currentMenuSetMillis = millis();
-        if(digitalRead(buttonRight)==1){                                                    //Right button press (increments setting values)
-          while(digitalRead(buttonRight)==1){
+        if(keyDown(buttonRight)){                                                    //Right button press (increments setting values)
+          while(keyHold(buttonRight)){
             if(millis()-currentMenuSetMillis>longPressTime){                                //Long Press     
               voltageBatteryMin += 1.00;                                                    //Increment by 1
               voltageBatteryMin = constrain(voltageBatteryMin,vOutSystemMin,vOutSystemMax); //Limit settings values to a range
@@ -250,8 +291,8 @@ void LCD_Menu(){
             lcd.print("V   ");                                                              //Display unit
           } 
         }
-        else if(digitalRead(buttonLeft)==1){                                                //Left button press (decrements setting values)
-          while(digitalRead(buttonLeft)==1){
+        else if(keyDown(buttonLeft)){                                                //Left button press (decrements setting values)
+          while(keyHold(buttonLeft)){
             if(millis()-currentMenuSetMillis>longPressTime){                                //Long Press     
               voltageBatteryMin -= 1.00;                                                    //Increment by 1
               voltageBatteryMin = constrain(voltageBatteryMin,vOutSystemMin,vOutSystemMax); //Limit settings values to a range
@@ -268,7 +309,7 @@ void LCD_Menu(){
       }    
     }
     ///// SETTINGS MENU ITEM: CHARGING CURRENT /////
-    else if(subMenuPage==4){
+    else if(subMenuPage==MENU_PAGE_CHARGING_CURRENT){
       lcd.setCursor(0,0);lcd.print("CHARGING CURRENT");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -278,11 +319,11 @@ void LCD_Menu(){
       //SET MENU - FLOATTYPE
       if(setMenuPage==0){floatTemp = currentCharging;}
       else{
-        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}currentCharging = floatTemp;cancelledMessageLCD();setMenuPage=0;} 
-        if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){}saveSettings();setMenuPage=0;savedMessageLCD();}     
+        if(keyDown(buttonBack)){currentCharging = floatTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(keyDown(buttonSelect)){saveSettings();setMenuPage=0;savedMessageLCD();}     
         currentMenuSetMillis = millis();
-        if(digitalRead(buttonRight)==1){                                                  //Right button press (increments setting values)
-          while(digitalRead(buttonRight)==1){
+        if(keyDown(buttonRight)){                                                  //Right button press (increments setting values)
+          while(keyHold(buttonRight)){
             if(millis()-currentMenuSetMillis>longPressTime){                              //Long Press     
               currentCharging += 1.00;                                                    //Increment by 1
               currentCharging = constrain(currentCharging,0.0,cOutSystemMax);             //Limit settings values to a range
@@ -296,8 +337,8 @@ void LCD_Menu(){
             lcd.print("A   ");                                                            //Display unit
           } 
         }
-        else if(digitalRead(buttonLeft)==1){                                              //Left button press (decrements setting values)
-          while(digitalRead(buttonLeft)==1){
+        else if(keyDown(buttonLeft)){                                              //Left button press (decrements setting values)
+          while(keyHold(buttonLeft)){
             if(millis()-currentMenuSetMillis>longPressTime){                              //Long Press     
               currentCharging -= 1.00;                                                    //Increment by 1
               currentCharging = constrain(currentCharging,0.0,cOutSystemMax);             //Limit settings values to a range
@@ -314,7 +355,7 @@ void LCD_Menu(){
       } 
     }
     ///// SETTINGS MENU ITEM: COOLING FAN /////
-    else if(subMenuPage==5){
+    else if(subMenuPage==MENU_PAGE_FAN_ENABLE){
       lcd.setCursor(0,0);lcd.print("COOLING FAN     ");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -324,16 +365,15 @@ void LCD_Menu(){
       //SET MENU - BOOLTYPE
       if(setMenuPage==0){boolTemp = enableFan;}
       else{
-        if(digitalRead(buttonRight)==1||digitalRead(buttonLeft)==1){
-          while(digitalRead(buttonRight)==1||digitalRead(buttonLeft)==1){}
+        if(keyDown(buttonRight)||keyDown(buttonLeft)){
           if(enableFan==1){enableFan=0;}else{enableFan=1;}
         }
-        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}enableFan = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
-        if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){}saveSettings();setMenuPage=0;savedMessageLCD();}
+        if(keyDown(buttonBack)){enableFan = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(keyDown(buttonSelect)){saveSettings();setMenuPage=0;savedMessageLCD();}
       } 
     }
     ///// SETTINGS MENU ITEM: FAN TRIG TEMP /////
-    else if(subMenuPage==6){
+    else if(subMenuPage==MENU_PAGE_FAN_LOW_TEMP){
       lcd.setCursor(0,0);lcd.print("FAN TRIGGER TEMP");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -343,18 +383,18 @@ void LCD_Menu(){
       //SET MENU - INTTYPE
       if(setMenuPage==0){intTemp = temperatureFan;}
       else{
-        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}temperatureFan = intTemp;cancelledMessageLCD();setMenuPage=0;} 
-        if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){}saveSettings();setMenuPage=0;savedMessageLCD();}     
-        if(digitalRead(buttonRight)==1){                                              //Right button press (increments setting values)
-          while(digitalRead(buttonRight)==1){   
+        if(keyDown(buttonBack)){temperatureFan = intTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(keyDown(buttonSelect)){saveSettings();setMenuPage=0;savedMessageLCD();}     
+        if(keyDown(buttonRight)){                                              //Right button press (increments setting values)
+          while(keyHold(buttonRight)){   
             temperatureFan++;                                                       //Increment by 1
             temperatureFan = constrain(temperatureFan,0,100);                       //Limit settings values to a range
             lcd.setCursor(2,1);lcd.print(temperatureFan);delay(shortPressInterval); //Display settings data                               
             lcd.print((char)223);lcd.print("C    ");                                //Display unit
           } 
         }
-        else if(digitalRead(buttonLeft)==1){                                        //Left button press (decrements setting values)
-          while(digitalRead(buttonLeft)==1){ 
+        else if(keyDown(buttonLeft)){                                        //Left button press (decrements setting values)
+          while(keyHold(buttonLeft)){ 
             temperatureFan--;                                                       //Increment by 1
             temperatureFan = constrain(temperatureFan,0,100);                       //Limit settings values to a range
             lcd.setCursor(2,1);lcd.print(temperatureFan);delay(shortPressInterval); //Display settings data                               
@@ -363,8 +403,39 @@ void LCD_Menu(){
         }
       }         
     }
+    ///// SETTINGS MENU ITEM: FAN TRIG TEMP /////
+    else if(subMenuPage==MENU_PAGE_FAN_HIGH_TEMP){
+      lcd.setCursor(0,0);lcd.print("FAN HIGH TEMP");
+      if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
+      else{lcd.setCursor(0,1);lcd.print("= ");}
+      lcd.setCursor(2,1);lcd.print(temperatureFanMax);
+      lcd.print((char)223);lcd.print("C");lcd.print("                ");  
+
+      //SET MENU - INTTYPE
+      if(setMenuPage==0){intTemp = temperatureFanMax;}
+      else{
+        if(keyDown(buttonBack)){temperatureFanMax = intTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(keyDown(buttonSelect)){saveSettings();setMenuPage=0;savedMessageLCD();}     
+        if(keyDown(buttonRight)){                                              //Right button press (increments setting values)
+          while(keyHold(buttonRight)){   
+            temperatureFanMax++;                                                       //Increment by 1
+            temperatureFanMax = constrain(temperatureFanMax,0,100);                       //Limit settings values to a range
+            lcd.setCursor(2,1);lcd.print(temperatureFanMax);delay(shortPressInterval); //Display settings data                               
+            lcd.print((char)223);lcd.print("C    ");                                //Display unit
+          } 
+        }
+        else if(keyDown(buttonLeft)){                                        //Left button press (decrements setting values)
+          while(keyHold(buttonLeft)){ 
+            temperatureFanMax--;                                                       //Increment by 1
+            temperatureFanMax = constrain(temperatureFanMax,0,100);                       //Limit settings values to a range
+            lcd.setCursor(2,1);lcd.print(temperatureFanMax);delay(shortPressInterval); //Display settings data                               
+            lcd.print((char)223);lcd.print("C    ");                                //Display unit
+          } 
+        }
+      }         
+    }
     ///// SETTINGS MENU ITEM: SHUTDOWN TEMP /////
-    else if(subMenuPage==7){
+    else if(subMenuPage==MENU_PAGE_SHUTDOWN_TEMP){
       lcd.setCursor(0,0);lcd.print("SHUTDOWN TEMP   ");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -374,18 +445,18 @@ void LCD_Menu(){
       //SET MENU - INTTYPE
       if(setMenuPage==0){intTemp = temperatureMax;}
       else{
-        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}temperatureMax = intTemp;cancelledMessageLCD();setMenuPage=0;} 
-        if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){}saveSettings();setMenuPage=0;savedMessageLCD();}     
-        if(digitalRead(buttonRight)==1){                                              //Right button press (increments setting values)
-          while(digitalRead(buttonRight)==1){   
+        if(keyDown(buttonBack)){temperatureMax = intTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(keyDown(buttonSelect)){saveSettings();setMenuPage=0;savedMessageLCD();}     
+        if(keyDown(buttonRight)){                                              //Right button press (increments setting values)
+          while(keyHold(buttonRight)){   
             temperatureMax++;                                                       //Increment by 1
             temperatureMax = constrain(temperatureMax,0,120);                       //Limit settings values to a range
             lcd.setCursor(2,1);lcd.print(temperatureMax);delay(shortPressInterval); //Display settings data                               
             lcd.print((char)223);lcd.print("C    ");                                //Display unit
           } 
         }
-        else if(digitalRead(buttonLeft)==1){                                        //Left button press (decrements setting values)
-          while(digitalRead(buttonLeft)==1){ 
+        else if(keyDown(buttonLeft)){                                        //Left button press (decrements setting values)
+          while(keyHold(buttonLeft)){ 
             temperatureMax--;                                                       //Increment by 1
             temperatureMax = constrain(temperatureMax,0,120);                       //Limit settings values to a range
             lcd.setCursor(2,1);lcd.print(temperatureMax);delay(shortPressInterval); //Display settings data                               
@@ -395,7 +466,7 @@ void LCD_Menu(){
       }       
     }
     ///// SETTINGS MENU ITEM: WIFI FEATURE /////
-    else if(subMenuPage==8){
+    else if(subMenuPage==MENU_PAGE_WIFI){
       lcd.setCursor(0,0);lcd.print("WIFI FEATURE    ");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -405,17 +476,16 @@ void LCD_Menu(){
       //SET MENU - BOOLTYPE
       if(setMenuPage==0){boolTemp = enableWiFi;}
       else{
-        if(digitalRead(buttonRight)==1||digitalRead(buttonLeft)==1){
-          while(digitalRead(buttonRight)==1||digitalRead(buttonLeft)==1){}
+        if(keyDown(buttonRight)||keyDown(buttonLeft)){
           if(enableWiFi==1){enableWiFi=0;}else{enableWiFi=1;}
         }
-        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}enableWiFi = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
-        if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){}saveSettings();setMenuPage=0;savedMessageLCD();}
+        if(keyDown(buttonBack)==1){enableWiFi = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(keyDown(buttonSelect)==1){saveSettings();setMenuPage=0;savedMessageLCD();}
       }       
     }
 
     ///// SETTINGS MENU ITEM: AUTOLOAD /////
-    else if(subMenuPage==9){
+    else if(subMenuPage==MENU_PAGE_AUTOLOAD){
       lcd.setCursor(0,0);lcd.print("AUTOLOAD FEATURE");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -425,16 +495,15 @@ void LCD_Menu(){
       //SET MENU - BOOLTYPE
       if(setMenuPage==0){boolTemp = flashMemLoad;}
       else{
-        if(digitalRead(buttonRight)==1||digitalRead(buttonLeft)==1){
-          while(digitalRead(buttonRight)==1||digitalRead(buttonLeft)==1){}
+        if(keyDown(buttonRight)||keyDown(buttonLeft)){
           if(flashMemLoad==1){flashMemLoad=0;}else{flashMemLoad=1;}
         }
-        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}flashMemLoad = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
-        if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){}saveAutoloadSettings();setMenuPage=0;savedMessageLCD();}
+        if(keyDown(buttonBack)){flashMemLoad = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(keyDown(buttonSelect)){saveAutoloadSettings();setMenuPage=0;savedMessageLCD();}
       }       
     }
     ///// SETTINGS MENU ITEM: BACKLIGHT SLEEP /////
-    else if(subMenuPage==10){
+    else if(subMenuPage==MENU_PAGE_BACKLIGHT_SLEEP){
       lcd.setCursor(0,0);lcd.print("BACKLIGHT SLEEP ");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -453,9 +522,9 @@ void LCD_Menu(){
       //SET MENU - INTMODETYPE
       if(setMenuPage==0){intTemp = backlightSleepMode;}
       else{
-        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}backlightSleepMode = intTemp;cancelledMessageLCD();setMenuPage=0;} 
-        if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){}saveSettings();setMenuPage=0;savedMessageLCD();}     
-        if(digitalRead(buttonRight)==1){                                                    //Right button press (increments setting values)
+        if(keyDown(buttonBack)){backlightSleepMode = intTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(keyDown(buttonSelect)){saveSettings();setMenuPage=0;savedMessageLCD();}     
+        if(keyDown(buttonRight)){                                                    //Right button press (increments setting values)
           backlightSleepMode++;                                                           //Increment by 1
           backlightSleepMode = constrain(backlightSleepMode,0,9);                         //Limit settings values to a range
           lcd.setCursor(2,1);
@@ -469,9 +538,8 @@ void LCD_Menu(){
           else if(backlightSleepMode==8){lcd.print("1 WEEK        ");}
           else if(backlightSleepMode==9){lcd.print("1 MONTH       ");}     
           else{lcd.print("NEVER         ");}    
-          while(digitalRead(buttonRight)==1){} 
         }
-        else if(digitalRead(buttonLeft)==1){                                              //Left button press (decrements setting values)
+        else if(keyDown(buttonLeft)==1){                                              //Left button press (decrements setting values)
           backlightSleepMode--;                                                           //Increment by 1
           backlightSleepMode = constrain(backlightSleepMode,0,9);                         //Limit settings values to a range
           lcd.setCursor(2,1);
@@ -485,12 +553,11 @@ void LCD_Menu(){
           else if(backlightSleepMode==8){lcd.print("1 WEEK        ");}
           else if(backlightSleepMode==9){lcd.print("1 MONTH       ");}     
           else{lcd.print("NEVER         ");}    
-          while(digitalRead(buttonLeft)==1){} 
         }
       }         
     }
     ///// SETTINGS MENU ITEM: FACTORY RESET /////
-    else if(subMenuPage==11){
+    else if(subMenuPage==MENU_PAGE_FACTORY_RESET){
       if(setMenuPage==0){
         lcd.setCursor(0,0);lcd.print("FACTORY RESET   ");
         lcd.setCursor(0,1);lcd.print("> PRESS SELECT  ");  
@@ -498,13 +565,13 @@ void LCD_Menu(){
       else{
         if(confirmationMenu==0){lcd.setCursor(0,0);lcd.print(" ARE YOU SURE?  ");lcd.setCursor(0,1);lcd.print("  >NO      YES  ");}  // Display ">No"
         else{lcd.setCursor(0,0);lcd.print(" ARE YOU SURE?  ");lcd.setCursor(0,1);lcd.print("   NO     >YES  ");}                     // Display ">YES"
-        if(digitalRead(buttonRight)==1||digitalRead(buttonLeft)==1){while(digitalRead(buttonRight)==1||digitalRead(buttonLeft)==1){}if(confirmationMenu==0){confirmationMenu=1;}else{confirmationMenu=0;}}  //Cycle Yes NO
-        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}cancelledMessageLCD();setMenuPage=0;confirmationMenu=0;} //Cancel
-        if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){}if(confirmationMenu==1){factoryReset();factoryResetMessageLCD();}setMenuPage=0;confirmationMenu=0;subMenuPage=0;}
+        if(keyDown(buttonRight)||keyDown(buttonLeft)){if(confirmationMenu==0){confirmationMenu=1;}else{confirmationMenu=0;}}  //Cycle Yes NO
+        if(keyDown(buttonBack)){cancelledMessageLCD();setMenuPage=0;confirmationMenu=0;} //Cancel
+        if(keyDown(buttonSelect)){if(confirmationMenu==1){factoryReset();factoryResetMessageLCD();}setMenuPage=0;confirmationMenu=0;subMenuPage=0;}
       } 
     }  
     ///// SETTINGS MENU ITEM: FIRMWARE VERSION /////
-    else if(subMenuPage==12){
+    else if(subMenuPage==MENU_PAGE_FIRMWARE){
       if(setMenuPage==0){
         lcd.setCursor(0,0);lcd.print("FIRMWARE VERSION");
         lcd.setCursor(0,1);lcd.print(firmwareInfo);    
@@ -515,7 +582,7 @@ void LCD_Menu(){
       else{
         lcd.setCursor(0,0);lcd.print(firmwareContactR1);
         lcd.setCursor(0,1);lcd.print(firmwareContactR2);          
-        if(digitalRead(buttonBack)==1||digitalRead(buttonSelect)==1){while(digitalRead(buttonBack)==1||digitalRead(buttonSelect)==1){}setMenuPage=0;} //Cancel
+        if(keyDown(buttonBack)||keyDown(buttonSelect)){setMenuPage=0;} //Cancel
       } 
     }  
   }
@@ -525,22 +592,16 @@ void LCD_Menu(){
 
     //LCD BACKLIGHT SLEEP
     lcdBacklight();
-
-    //BUTTON KEYPRESS
-    if(digitalRead(buttonRight)==1) {buttonRightCommand=1;lcdBacklight_Wake();}
-    if(digitalRead(buttonLeft)==1)  {buttonLeftCommand=1;lcdBacklight_Wake();}
-    if(digitalRead(buttonBack)==1)  {buttonBackCommand=1;lcdBacklight_Wake();}
-    if(digitalRead(buttonSelect)==1){buttonSelectCommand=1;lcdBacklight_Wake();}
-    
+   
     currentLCDMillis = millis();
     if(currentLCDMillis-prevLCDMillis>=millisLCDInterval&&enableLCD==1){   //Run routine every millisLCDInterval (ms)
       prevLCDMillis = currentLCDMillis;     
 
       //MENU PAGE BUTTON ACTION
-      if(buttonRightCommand==1)      {buttonRightCommand=0;menuPage++;lcd.clear();}
-      else if(buttonLeftCommand==1)  {buttonLeftCommand=0;menuPage--;lcd.clear();}
-      else if(buttonBackCommand==1)  {buttonBackCommand=0;menuPage=0;lcd.clear();}
-      else if(buttonSelectCommand==1&&menuPage==4){buttonSelectCommand=0;settingMode=1;lcd.clear();}
+      if(keyDown(buttonRight))      {buttonRightCommand=0;menuPage++;lcd.clear();}
+      else if(keyDown(buttonLeft))  {buttonLeftCommand=0;menuPage--;lcd.clear();}
+      else if(keyDown(buttonBack))  {buttonBackCommand=0;menuPage=0;lcd.clear();}
+      else if(keyDown(buttonSelect) &&menuPage==4){buttonSelectCommand=0;settingMode=1;lcd.clear();}
       if(menuPage>menuPages){menuPage=0;}
       else if(menuPage<0){menuPage=menuPages;}  
 
