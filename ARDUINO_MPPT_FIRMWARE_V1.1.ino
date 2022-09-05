@@ -124,6 +124,8 @@ class MyServerCallbacks: public BLEServerCallbacks {
 #define buttonRight     17          //SYSTEM PARAMETER -
 #define buttonBack      19          //SYSTEM PARAMETER - 
 #define buttonSelect    23          //SYSTEM PARAMETER -
+#define KEYINPUT_MODE   INPUT_PULLUP // Mode for keyboard input pins - so R25,R26,R27,R28 are obsolete
+#define KEYINPUT_ACTIVE_LEVEL 0      // Which level represents a pressed key
 
 //========================================= WiFi SSID ==============================================//
 // This MPPT firmware uses the Blynk phone app and arduino library for controls and data telemetry  //
@@ -172,8 +174,8 @@ baudRate                = 115200,      //  USER PARAMETER - USB Serial Baud Rate
 bluetoothUpdateMS       = 3000;        //  USER PARAMETER - BLE notification frequency
 
 float 
-voltageBatteryMax       = 2*13.80,     //   USER PARAMETER - Maximum Battery Charging Voltage (Output V)
-voltageBatteryMin       = 2*10.5000,     //   USER PARAMETER - Minimum Battery Charging Voltage (Output V)
+voltageBatteryMax       = 4.1*4,     //   USER PARAMETER - Maximum Battery Charging Voltage (Output V)
+voltageBatteryMin       = 4*3.0,     //   USER PARAMETER - Minimum Battery Charging Voltage (Output V)
 currentCharging         = 30.0000,     //   USER PARAMETER - Maximum Charging Current (A - Output)
 electricalPrice         = 26.000;      //   USER PARAMETER - Input electrical price per kWh (Dollar/kWh,Euro/kWh,Peso/kWh)
 
@@ -192,7 +194,7 @@ avgCountCS              = 4,          //  CALIB PARAMETER - Current Sensor Avera
 avgCountTS              = 50;        //  CALIB PARAMETER - Temperature Sensor Average Sampling Count
 float
 inVoltageDivRatio       = 39.77,    //  CALIB PARAMETER - Input voltage divider sensor ratio (change this value to calibrate voltage sensor)
-outVoltageDivRatio      = 24.192,    //  CALIB PARAMETER - Output voltage divider sensor ratio (change this value to calibrate voltage sensor)
+outVoltageDivRatio      = 24.192*14.69/14.624,    //  CALIB PARAMETER - Output voltage divider sensor ratio (change this value to calibrate voltage sensor)
 vOutSystemMax           = 50.0000,    //  CALIB PARAMETER - 
 cOutSystemMax           = 50.0000,    //  CALIB PARAMETER - 
 ntcResistance           = 10000.00,   //  CALIB PARAMETER - NTC temp sensor's resistance. Change to 10000.00 if you are using a 10k NTC
@@ -338,11 +340,10 @@ void setup() {
   pinMode(FAN,OUTPUT);
   pinMode(TS,INPUT); 
   pinMode(ADC_ALERT,INPUT);
-  pinMode(buttonLeft,INPUT); 
-  pinMode(buttonRight,INPUT); 
-  pinMode(buttonBack,INPUT); 
-  pinMode(buttonSelect,INPUT); 
-  
+  pinMode(buttonLeft,KEYINPUT_MODE); 
+  pinMode(buttonRight,KEYINPUT_MODE); 
+  pinMode(buttonBack,KEYINPUT_MODE); 
+  pinMode(buttonSelect,KEYINPUT_MODE); 
   //PWM INITIALIZATION
   ledcSetup(pwmChannel,pwmFrequency,pwmResolution);          //Set PWM Parameters
   ledcAttachPin(buck_IN, pwmChannel);                        //Set pin as PWM

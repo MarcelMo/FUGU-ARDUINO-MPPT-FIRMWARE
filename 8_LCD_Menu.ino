@@ -29,13 +29,13 @@ boolean lcdBacklight_Wake(){
 int waitForRelease = 0;
 bool keyDown(int button) {
   if (waitForRelease!=0) { // Waiting for keyup ?
-    if (digitalRead(waitForRelease)==1) { // Still pressed ?
+    if (digitalRead(waitForRelease)==KEYINPUT_ACTIVE_LEVEL) { // Still pressed ?
       return(false);
     } else {                              // Continue normal operation
       waitForRelease=0;
     }
   }
-  bool isPressed = digitalRead(button)==1;
+  bool isPressed = digitalRead(button)==KEYINPUT_ACTIVE_LEVEL;
   if (isPressed) {
     waitForRelease = button;
     return(!lcdBacklight_Wake());
@@ -45,7 +45,7 @@ bool keyDown(int button) {
 }
 
 bool keyHold(int button) {
-  return(digitalRead(button)==1);
+  return(digitalRead(button)==KEYINPUT_ACTIVE_LEVEL);
 }
 
 void lcdBacklight(){
@@ -274,7 +274,7 @@ void LCD_Menu(){
       if(setMenuPage==0){floatTemp = voltageBatteryMin;}
       else{
         if(keyDown(buttonBack)){while(keyHold(buttonBack)){}voltageBatteryMin = floatTemp;cancelledMessageLCD();setMenuPage=0;} 
-        if(keyDown(buttonSelect)==1){while(keyHold(buttonSelect)){}saveSettings();setMenuPage=0;savedMessageLCD();}     
+        if(keyDown(buttonSelect)){while(keyHold(buttonSelect)){}saveSettings();setMenuPage=0;savedMessageLCD();}     
         currentMenuSetMillis = millis();
         if(keyDown(buttonRight)){                                                    //Right button press (increments setting values)
           while(keyHold(buttonRight)){
@@ -479,8 +479,8 @@ void LCD_Menu(){
         if(keyDown(buttonRight)||keyDown(buttonLeft)){
           if(enableWiFi==1){enableWiFi=0;}else{enableWiFi=1;}
         }
-        if(keyDown(buttonBack)==1){enableWiFi = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
-        if(keyDown(buttonSelect)==1){saveSettings();setMenuPage=0;savedMessageLCD();}
+        if(keyDown(buttonBack)){enableWiFi = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(keyDown(buttonSelect)){saveSettings();setMenuPage=0;savedMessageLCD();}
       }       
     }
 
@@ -539,7 +539,7 @@ void LCD_Menu(){
           else if(backlightSleepMode==9){lcd.print("1 MONTH       ");}     
           else{lcd.print("NEVER         ");}    
         }
-        else if(keyDown(buttonLeft)==1){                                              //Left button press (decrements setting values)
+        else if(keyDown(buttonLeft)){                                              //Left button press (decrements setting values)
           backlightSleepMode--;                                                           //Increment by 1
           backlightSleepMode = constrain(backlightSleepMode,0,9);                         //Limit settings values to a range
           lcd.setCursor(2,1);
