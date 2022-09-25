@@ -24,7 +24,9 @@ void PWM_Modulation(){
   ledcWrite(pwmChannel,PWM);                                                         //Set PWM duty cycle and write to GPIO when buck is enabled
   buck_Enable();                                                                     //Turn on MPPT buck (IR2104)
 }
-     
+
+bool lastPWMplus=true;
+
 void Charging_Algorithm(){
   if(ERR>0||chargingPause==1){buck_Disable();}                                       //ERROR PRESENT  - Turn off MPPT buck when error is present or when chargingPause is used for a pause override
   else{
@@ -53,14 +55,17 @@ void Charging_Algorithm(){
       }     
         /////////////////////// MPPT & CC-CV CHARGING ALGORITHM ///////////////////////  
       else{                                                                                                                                                         
-        if(currentOutput>currentCharging){PWM--;}                                      //Current Is Above → Decrease Duty Cycle
-        else if(voltageOutput>voltageBatteryMax){PWM--;}                               //Voltage Is Above → Decrease Duty Cycle   
-        else{                                                                          //MPPT ALGORITHM
-          if(powerInput>powerInputPrev && voltageInput>voltageInputPrev)     {PWM--;}  //  ↑P ↑V ; →MPP  //D--
-          else if(powerInput>powerInputPrev && voltageInput<voltageInputPrev){PWM++;}  //  ↑P ↓V ; MPP←  //D++
-          else if(powerInput<powerInputPrev && voltageInput>voltageInputPrev){PWM++;}  //  ↓P ↑V ; MPP→  //D++
-          else if(powerInput<powerInputPrev && voltageInput<voltageInputPrev){PWM--;}  //  ↓P ↓V ; ←MPP  //D--
-          else if(voltageOutput<voltageBatteryMax)                           {PWM++;}  //  MP MV ; MPP Reached - 
+        if(currentOutput>currentCharging || voltageOutput>voltageBatteryMax) {PWM--; lastPWMplus=false; }   //Current or voltage is too high → Decrease Duty Cycle
+        else if (voltageOutput==voltageBatteryMax) {} // target voltage reached -> don't do anything
+        else if(powerInput<0.01 && voltageInput > voltageOutput+voltageDropout ){PWM++; lastPWMplus=true; }  // Startup
+        else {                                                                          //MPPT ALGORITHM
+          if     (powerInput>powerInputPrev && voltageInput==voltageInputPrev){ 
+            if (lastPWMplus) { PWM++; } else { PWM--; } 
+          }  //  ↑P V stable - repeat
+          else if(powerInput>powerInputPrev && voltageInput>voltageInputPrev){PWM++; lastPWMplus=true; }  //  ↑P ↑V ; →MPP  //D++
+          else if(powerInput>powerInputPrev && voltageInput<voltageInputPrev){PWM++; lastPWMplus=true;  }  //  ↑P ↓V ; MPP←  //D++
+          else if(powerInput<powerInputPrev && voltageInput<voltageInputPrev){PWM--; lastPWMplus=false; }  //  ↓P ↓V ; ←MPP  //D--
+          else if(voltageOutput<voltageBatteryMax)                           {PWM++; lastPWMplus=true;  }  //  MP MV ; MPP Reached - 
           powerInputPrev   = powerInput;                                               //Store Previous Recorded Power
           voltageInputPrev = voltageInput;                                             //Store Previous Recorded Voltage        
         }   
