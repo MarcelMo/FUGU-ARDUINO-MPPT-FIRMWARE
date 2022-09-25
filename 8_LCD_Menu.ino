@@ -16,9 +16,9 @@
 
 bool displaySleeping = false;
 boolean lcdBacklight_Wake(){
+  prevLCDBackLMillis = millis();
   if (displaySleeping) {
     lcd.setBacklight(HIGH);
-    prevLCDBackLMillis = millis();
     displaySleeping=false;
     return(true);
   } else {
@@ -66,6 +66,7 @@ void lcdBacklight(){
     if(currentLCDBackLMillis-prevLCDBackLMillis>=backLightInterval){        //Run routine every millisRoutineInterval (ms)
       prevLCDBackLMillis = currentLCDBackLMillis;                           //Store previous time
       lcd.setBacklight(LOW);                                                //Increment time counter
+      displaySleeping = true;
     } 
   }  
 }
@@ -593,23 +594,18 @@ void LCD_Menu(){
     //LCD BACKLIGHT SLEEP
     lcdBacklight();
    
-    currentLCDMillis = millis();
-    if(currentLCDMillis-prevLCDMillis>=millisLCDInterval&&enableLCD==1){   //Run routine every millisLCDInterval (ms)
-      prevLCDMillis = currentLCDMillis;     
+    //MENU PAGE BUTTON ACTION
+    if(keyDown(buttonRight))      {buttonRightCommand=0;menuPage++;lcd.clear();}
+    else if(keyDown(buttonLeft))  {buttonLeftCommand=0;menuPage--;lcd.clear();}
+    else if(keyDown(buttonBack))  {buttonBackCommand=0;menuPage=0;lcd.clear();}
+    else if(keyDown(buttonSelect) &&menuPage==4){buttonSelectCommand=0;settingMode=1;lcd.clear();}
+    if(menuPage>menuPages){menuPage=0;}
+    else if(menuPage<0){menuPage=menuPages;}  
 
-      //MENU PAGE BUTTON ACTION
-      if(keyDown(buttonRight))      {buttonRightCommand=0;menuPage++;lcd.clear();}
-      else if(keyDown(buttonLeft))  {buttonLeftCommand=0;menuPage--;lcd.clear();}
-      else if(keyDown(buttonBack))  {buttonBackCommand=0;menuPage=0;lcd.clear();}
-      else if(keyDown(buttonSelect) &&menuPage==4){buttonSelectCommand=0;settingMode=1;lcd.clear();}
-      if(menuPage>menuPages){menuPage=0;}
-      else if(menuPage<0){menuPage=menuPages;}  
-
-      if(menuPage==0)     {displayConfig1();}
-      else if(menuPage==1){displayConfig2();}
-      else if(menuPage==2){displayConfig3();}
-      else if(menuPage==3){displayConfig4();}
-      else if(menuPage==4){displayConfig5();}
-    }    
+    if(menuPage==0)     {displayConfig1();}
+    else if(menuPage==1){displayConfig2();}
+    else if(menuPage==2){displayConfig3();}
+    else if(menuPage==3){displayConfig4();}
+    else if(menuPage==4){displayConfig5();}
   }
 }

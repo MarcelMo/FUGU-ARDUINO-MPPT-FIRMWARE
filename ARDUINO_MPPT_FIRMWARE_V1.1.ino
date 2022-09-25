@@ -166,16 +166,15 @@ errorTimeLimit          = 1000,        //  USER PARAMETER - Time interval for re
 errorCountLimit         = 5,           //  USER PARAMETER - Maximum number of errors  
 millisRoutineInterval   = 250,         //  USER PARAMETER - Time Interval Refresh Rate For Routine Functions (ms)
 millisSerialInterval    = 1,           //  USER PARAMETER - Time Interval Refresh Rate For USB Serial Datafeed (ms)
-millisLCDInterval       = 1000,        //  USER PARAMETER - Time Interval Refresh Rate For LCD Display (ms)
+millisLCDInterval       = 500,        //  USER PARAMETER - Time Interval Refresh Rate For LCD Display (ms)
 millisWiFiInterval      = 2000,        //  USER PARAMETER - Time Interval Refresh Rate For WiFi Telemetry (ms)
-millisLCDBackLInterval  = 2000,        //  USER PARAMETER - Time Interval Refresh Rate For WiFi Telemetry (ms)
-backlightSleepMode      = 10,           //  USER PARAMETER - 0 = Never, 1 = 10secs, 2 = 5mins, 3 = 1hr, 4 = 6 hrs, 5 = 12hrs, 6 = 1 day, 7 = 3 days, 8 = 1wk, 9 = 1month
+backlightSleepMode      = 1,           //  USER PARAMETER - 0 = Never, 1 = 10secs, 2 = 5mins, 3 = 1hr, 4 = 6 hrs, 5 = 12hrs, 6 = 1 day, 7 = 3 days, 8 = 1wk, 9 = 1month
 baudRate                = 115200,      //  USER PARAMETER - USB Serial Baud Rate (bps)
 bluetoothUpdateMS       = 3000;        //  USER PARAMETER - BLE notification frequency
 
 float 
-voltageBatteryMax       = 4.1*4,     //   USER PARAMETER - Maximum Battery Charging Voltage (Output V)
-voltageBatteryMin       = 4*3.0,     //   USER PARAMETER - Minimum Battery Charging Voltage (Output V)
+voltageBatteryMax       = 4.2*7,     //   USER PARAMETER - Maximum Battery Charging Voltage (Output V)
+voltageBatteryMin       = 7*2.8,     //   USER PARAMETER - Minimum Battery Charging Voltage (Output V)
 currentCharging         = 30.0000,     //   USER PARAMETER - Maximum Charging Current (A - Output)
 electricalPrice         = 26.000;      //   USER PARAMETER - Input electrical price per kWh (Dollar/kWh,Euro/kWh,Peso/kWh)
 
@@ -199,7 +198,7 @@ vOutSystemMax           = 50.0000,    //  CALIB PARAMETER -
 cOutSystemMax           = 50.0000,    //  CALIB PARAMETER - 
 ntcResistance           = 10000.00,   //  CALIB PARAMETER - NTC temp sensor's resistance. Change to 10000.00 if you are using a 10k NTC
 voltageDropout          = 1.0000,     //  CALIB PARAMETER - Buck regulator's dropout voltage (DOV is present due to Max Duty Cycle Limit)
-voltageBatteryThresh    = 0.3000,     //  CALIB PARAMETER - Power cuts-off when this voltage is reached (Output V)
+voltageBatteryThresh    = 0.0400,     //  CALIB PARAMETER - Power cuts-off when this voltage is reached (Output V)
 currentInAbsolute       = 31.0000,    //  CALIB PARAMETER - Maximum Input Current The System Can Handle (A - Input)
 currentOutAbsolute      = 50.0000,    //  CALIB PARAMETER - Maximum Output Current The System Can Handle (A - Input)
 PPWM_margin             = 99.5000,    //  CALIB PARAMETER - Minimum Operating Duty Cycle for Predictive PWM (%)
@@ -294,7 +293,6 @@ currentErrorMillis    = 0,           //SYSTEM PARAMETER -
 currentButtonMillis   = 0,           //SYSTEM PARAMETER -
 currentSerialMillis   = 0,           //SYSTEM PARAMETER -
 currentRoutineMillis  = 0,           //SYSTEM PARAMETER -
-currentLCDMillis      = 0,           //SYSTEM PARAMETER - 
 currentLCDBackLMillis = 0,           //SYSTEM PARAMETER - 
 currentWiFiMillis     = 0,           //SYSTEM PARAMETER - 
 currentMenuSetMillis  = 0,           //SYSTEM PARAMETER - 
@@ -303,7 +301,6 @@ prevSerialMillis      = 0,           //SYSTEM PARAMETER -
 prevRoutineMillis     = 0,           //SYSTEM PARAMETER -
 prevErrorMillis       = 0,           //SYSTEM PARAMETER -
 prevWiFiMillis        = 0,           //SYSTEM PARAMETER -
-prevLCDMillis         = 0,           //SYSTEM PARAMETER -
 prevLCDBackLMillis    = 0,           //SYSTEM PARAMETER -
 timeOn                = 0,           //SYSTEM PARAMETER -
 loopTimeStart         = 0,           //SYSTEM PARAMETER - Used for the loop cycle stop watch, records the loop start time
