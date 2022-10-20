@@ -169,7 +169,7 @@ millisSerialInterval    = 1,           //  USER PARAMETER - Time Interval Refres
 millisLCDInterval       = 500,        //  USER PARAMETER - Time Interval Refresh Rate For LCD Display (ms)
 millisWiFiInterval      = 2000,        //  USER PARAMETER - Time Interval Refresh Rate For WiFi Telemetry (ms)
 backlightSleepMode      = 1,           //  USER PARAMETER - 0 = Never, 1 = 10secs, 2 = 5mins, 3 = 1hr, 4 = 6 hrs, 5 = 12hrs, 6 = 1 day, 7 = 3 days, 8 = 1wk, 9 = 1month
-baudRate                = 115200,      //  USER PARAMETER - USB Serial Baud Rate (bps)
+baudRate                = 500000,      //  USER PARAMETER - USB Serial Baud Rate (bps)
 bluetoothUpdateMS       = 3000;        //  USER PARAMETER - BLE notification frequency
 
 float 
@@ -357,8 +357,9 @@ void setup() {
   
   //ADC INITIALIZATION
   ADC_SetGain();                                             //Sets ADC Gain & Range
+  Wire.setClock(3400000);
   ads.begin();                                               //Initialize ADC
-
+  ads.setDataRate(RATE_ADS1115_860SPS);
   //GPIO INITIALIZATION                          
   buck_Disable();
 
@@ -400,9 +401,13 @@ void loop() {
 
   while (Serial.available() > 0) {
     char c=Serial.read();
-    if (c == 'R') { // Reset
+    if (c == 'F') { // Factory Reset
       flashMemLoad=0;
       saveAutoloadSettings();
+      Serial.println("FACTORY RESET");
+      ESP.restart();
+    }
+    if (c == 'R') { // Reset
       Serial.println("RESET");
       ESP.restart();
     }
