@@ -155,6 +155,8 @@ void cancelledMessageLCD(){
 }
 
 ////////////////////////////////////////////  MAIN LCD MENU CODE /////////////////////////////////////////////
+bool updateDisplay = true;
+long nextDisplayUpdate = 0;
 void LCD_Menu(){
   int 
   menuPages          = 4,
@@ -163,23 +165,29 @@ void LCD_Menu(){
   longPressInterval  = 500,
   shortPressInterval = 100;
 
+  int now=micros();
+  if (now>nextDisplayUpdate) {
+    updateDisplay=!displaySleeping;
+    nextDisplayUpdate=now+1000;
+  }
+
   //SETTINGS MENU
   if(settingMode==1){
     chargingPause = 1;
 
     //BUTTON KEYPRESS
     if(setMenuPage==MENU_PAGE_SUPPLY_ALGORYTHM){
-      if(keyDown(buttonRight)){subMenuPage++;}
-      if(keyDown(buttonLeft)) {subMenuPage--;}
-      if(keyDown(buttonBack)) {settingMode=0;subMenuPage=0;}  //bool engage, main menu int page
-      if(keyDown(buttonSelect)){setMenuPage=1;} //enter sub menu settings - bool engage 
+      if(keyDown(buttonRight)){subMenuPage++; updateDisplay=true; }
+      if(keyDown(buttonLeft)) {subMenuPage--; updateDisplay=true; }
+      if(keyDown(buttonBack)) {settingMode=0;subMenuPage=0; updateDisplay=true; }  //bool engage, main menu int page
+      if(keyDown(buttonSelect)){setMenuPage=1; updateDisplay=true; } //enter sub menu settings - bool engage 
     } 
     //SUB MENU PAGE CYCLING
     if(subMenuPage>subMenuPages){subMenuPage=0;}                     
     else if(subMenuPage<0){subMenuPage=subMenuPages;}  
     //--------------------------- SETTINGS MENU PAGES: ---------------------------// 
     ///// SETTINGS MENU ITEM: SUPPLY ALGORITHM SELECT /////
-    if(subMenuPage==0){
+    if(subMenuPage==0 && updateDisplay){
       lcd.setCursor(0,0);lcd.print("SUPPLY ALGORITHM");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -198,7 +206,7 @@ void LCD_Menu(){
     }
 
     ///// SETTINGS MENU ITEM: CHARER/PSU MODE /////
-    else if(subMenuPage==MENU_PAGE_MODE){
+    else if(subMenuPage==MENU_PAGE_MODE && updateDisplay){
       lcd.setCursor(0,0);lcd.print("CHARGER/PSU MODE");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -218,7 +226,7 @@ void LCD_Menu(){
 
     
     ///// SETTINGS MENU ITEM: MAX BATTERY V /////
-    else if(subMenuPage==MENU_PAGE_MAX_BATTERY){
+    else if(subMenuPage==MENU_PAGE_MAX_BATTERY && updateDisplay){
       lcd.setCursor(0,0);lcd.print("MAX BATTERY V   ");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -264,7 +272,7 @@ void LCD_Menu(){
       }    
     }
     ///// SETTINGS MENU ITEM: MIN BATTERY V /////
-    else if(subMenuPage==MENU_PAGE_MIN_BATTERY){
+    else if(subMenuPage==MENU_PAGE_MIN_BATTERY && updateDisplay){
       lcd.setCursor(0,0);lcd.print("MIN BATTERY V   ");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -310,7 +318,7 @@ void LCD_Menu(){
       }    
     }
     ///// SETTINGS MENU ITEM: CHARGING CURRENT /////
-    else if(subMenuPage==MENU_PAGE_CHARGING_CURRENT){
+    else if(subMenuPage==MENU_PAGE_CHARGING_CURRENT && updateDisplay){
       lcd.setCursor(0,0);lcd.print("CHARGING CURRENT");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -356,7 +364,7 @@ void LCD_Menu(){
       } 
     }
     ///// SETTINGS MENU ITEM: COOLING FAN /////
-    else if(subMenuPage==MENU_PAGE_FAN_ENABLE){
+    else if(subMenuPage==MENU_PAGE_FAN_ENABLE && updateDisplay){
       lcd.setCursor(0,0);lcd.print("COOLING FAN     ");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -374,7 +382,7 @@ void LCD_Menu(){
       } 
     }
     ///// SETTINGS MENU ITEM: FAN TRIG TEMP /////
-    else if(subMenuPage==MENU_PAGE_FAN_LOW_TEMP){
+    else if(subMenuPage==MENU_PAGE_FAN_LOW_TEMP && updateDisplay){
       lcd.setCursor(0,0);lcd.print("FAN TRIGGER TEMP");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -405,7 +413,7 @@ void LCD_Menu(){
       }         
     }
     ///// SETTINGS MENU ITEM: FAN TRIG TEMP /////
-    else if(subMenuPage==MENU_PAGE_FAN_HIGH_TEMP){
+    else if(subMenuPage==MENU_PAGE_FAN_HIGH_TEMP && updateDisplay){
       lcd.setCursor(0,0);lcd.print("FAN HIGH TEMP");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -436,7 +444,7 @@ void LCD_Menu(){
       }         
     }
     ///// SETTINGS MENU ITEM: SHUTDOWN TEMP /////
-    else if(subMenuPage==MENU_PAGE_SHUTDOWN_TEMP){
+    else if(subMenuPage==MENU_PAGE_SHUTDOWN_TEMP && updateDisplay){
       lcd.setCursor(0,0);lcd.print("SHUTDOWN TEMP   ");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -467,7 +475,7 @@ void LCD_Menu(){
       }       
     }
     ///// SETTINGS MENU ITEM: WIFI FEATURE /////
-    else if(subMenuPage==MENU_PAGE_WIFI){
+    else if(subMenuPage==MENU_PAGE_WIFI && updateDisplay){
       lcd.setCursor(0,0);lcd.print("WIFI FEATURE    ");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -486,7 +494,7 @@ void LCD_Menu(){
     }
 
     ///// SETTINGS MENU ITEM: AUTOLOAD /////
-    else if(subMenuPage==MENU_PAGE_AUTOLOAD){
+    else if(subMenuPage==MENU_PAGE_AUTOLOAD && updateDisplay){
       lcd.setCursor(0,0);lcd.print("AUTOLOAD FEATURE");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -504,7 +512,7 @@ void LCD_Menu(){
       }       
     }
     ///// SETTINGS MENU ITEM: BACKLIGHT SLEEP /////
-    else if(subMenuPage==MENU_PAGE_BACKLIGHT_SLEEP){
+    else if(subMenuPage==MENU_PAGE_BACKLIGHT_SLEEP && updateDisplay){
       lcd.setCursor(0,0);lcd.print("BACKLIGHT SLEEP ");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
@@ -558,7 +566,7 @@ void LCD_Menu(){
       }         
     }
     ///// SETTINGS MENU ITEM: FACTORY RESET /////
-    else if(subMenuPage==MENU_PAGE_FACTORY_RESET){
+    else if(subMenuPage==MENU_PAGE_FACTORY_RESET && updateDisplay){
       if(setMenuPage==0){
         lcd.setCursor(0,0);lcd.print("FACTORY RESET   ");
         lcd.setCursor(0,1);lcd.print("> PRESS SELECT  ");  
@@ -572,7 +580,7 @@ void LCD_Menu(){
       } 
     }  
     ///// SETTINGS MENU ITEM: FIRMWARE VERSION /////
-    else if(subMenuPage==MENU_PAGE_FIRMWARE){
+    else if(subMenuPage==MENU_PAGE_FIRMWARE && updateDisplay){
       if(setMenuPage==0){
         lcd.setCursor(0,0);lcd.print("FIRMWARE VERSION");
         lcd.setCursor(0,1);lcd.print(firmwareInfo);    
@@ -595,17 +603,18 @@ void LCD_Menu(){
     lcdBacklight();
    
     //MENU PAGE BUTTON ACTION
-    if(keyDown(buttonRight))      {buttonRightCommand=0;menuPage++;lcd.clear();}
-    else if(keyDown(buttonLeft))  {buttonLeftCommand=0;menuPage--;lcd.clear();}
-    else if(keyDown(buttonBack))  {buttonBackCommand=0;menuPage=0;lcd.clear();}
-    else if(keyDown(buttonSelect) &&menuPage==4){buttonSelectCommand=0;settingMode=1;lcd.clear();}
+    if(keyDown(buttonRight))      {buttonRightCommand=0;menuPage++;lcd.clear(); updateDisplay=true; }
+    else if(keyDown(buttonLeft))  {buttonLeftCommand=0;menuPage--;lcd.clear(); updateDisplay=true;}
+    else if(keyDown(buttonBack))  {buttonBackCommand=0;menuPage=0;lcd.clear(); updateDisplay=true;}
+    else if(keyDown(buttonSelect) && menuPage==4){buttonSelectCommand=0;settingMode=1;lcd.clear(); updateDisplay=true;}
     if(menuPage>menuPages){menuPage=0;}
     else if(menuPage<0){menuPage=menuPages;}  
 
-    if(menuPage==0)     {displayConfig1();}
-    else if(menuPage==1){displayConfig2();}
-    else if(menuPage==2){displayConfig3();}
-    else if(menuPage==3){displayConfig4();}
-    else if(menuPage==4){displayConfig5();}
+    if(menuPage==0 && updateDisplay)     {displayConfig1();}
+    else if(menuPage==1 && updateDisplay){displayConfig2();}
+    else if(menuPage==2 && updateDisplay){displayConfig3();}
+    else if(menuPage==3 && updateDisplay){displayConfig4();}
+    else if(menuPage==4 && updateDisplay){displayConfig5();}
   }
+  updateDisplay=false;
 }
