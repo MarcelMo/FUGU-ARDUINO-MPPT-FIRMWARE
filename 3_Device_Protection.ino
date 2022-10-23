@@ -26,7 +26,7 @@ void Device_Protection(){
 
   if(output_Mode==0){                                                                               //PSU MODE specific protection protocol
     REC = 0; BNC = 0;                                                                               //Clear recovery and battery not connected boolean identifiers
-    if(voltageInput<voltageBatteryMax+voltageDropout){
+    if(voltageInput<voltageOutput+voltageDropout){
       IUV=1;ERR++;errorCount++;
     } else {
       IUV=0;
