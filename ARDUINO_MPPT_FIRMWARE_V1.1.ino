@@ -117,7 +117,7 @@ class MyServerCallbacks: public BLEServerCallbacks {
 #define buck_IN         33          //SYSTEM PARAMETER - Buck MOSFET Driver PWM Pin
 #define buck_EN         32          //SYSTEM PARAMETER - Buck MOSFET Driver Enable Pin
 #define LED             2           //SYSTEM PARAMETER - LED Indicator GPIO Pin
-#define FAN             16          //SYSTEM PARAMETER - Fan GPIO Pin
+#define FAN             5          //SYSTEM PARAMETER - Fan GPIO Pin
 #define ADC_ALERT       34          //SYSTEM PARAMETER - Fan GPIO Pin
 #define TempSensor      35          //SYSTEM PARAMETER - Temperature Sensor GPIO Pin
 #define buttonLeft      18          //SYSTEM PARAMETER - 
