@@ -142,7 +142,6 @@ pass[] = "katrinsnetz";               //   USER PARAMETER - Enter Your WiFi Pass
 //=================================================================================================//
 bool                                  
 MPPT_Mode               = 1,           //   USER PARAMETER - Enable MPPT algorithm, when disabled charger uses CC-CV algorithm 
-output_Mode             = 1,           //   USER PARAMETER - 0 = PSU MODE, 1 = Charger Mode  
 disableFlashAutoLoad    = 0,           //   USER PARAMETER - Forces the MPPT to not use flash saved settings, enabling this "1" defaults to programmed firmware settings.
 enablePPWM              = 1,           //   USER PARAMETER - Enables Predictive PWM, this accelerates regulation speed (only applicable for battery charging application)
 enableWiFi              = 1,           //   USER PARAMETER - Enable WiFi Connection
@@ -153,6 +152,7 @@ enableLCDBacklight      = 0,           //   USER PARAMETER - Enable LCD display'
 overrideFan             = 0,           //   USER PARAMETER - Fan always on
 enableDynamicCooling    = 1;           //   USER PARAMETER - Enable for PWM cooling control 
 int
+output_Mode             = 1,           //   USER PARAMETER - 0 = PSU MODE, 1 = Charger Mode, 2 = Charger Mode with BMS
 fanPWMFrequency         = 25000,        //  USER PARAMETER - Fan PWM frequency for dynamic cooling mode
 serialTelemMode         = 1,           //  USER PARAMETER - Selects serial telemetry data feed (0 - Disable Serial, 1 - Display All Data, 2 - Display Essential, 3 - Number only)
 pwmResolution           = 11,          //  USER PARAMETER - PWM Bit Resolution 

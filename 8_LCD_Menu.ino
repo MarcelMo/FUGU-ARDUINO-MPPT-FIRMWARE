@@ -210,16 +210,21 @@ void LCD_Menu(){
       lcd.setCursor(0,0);lcd.print("CHARGER/PSU MODE");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
+      if(output_Mode==0){lcd.print("PSU MODE      ");}
       if(output_Mode==1){lcd.print("CHARGER MODE  ");}
-      else{lcd.print("PSU MODE      ");}
+      if(output_Mode==2){lcd.print("CHARGER + BMS ");}
 
       //SET MENU - BOOLTYPE
-      if(setMenuPage==0){boolTemp = output_Mode;}
+      if(setMenuPage==0){intTemp = output_Mode;}
       else{
-        if(keyDown(buttonRight)||keyDown(buttonLeft)){
-          if(output_Mode==1){output_Mode=0;}else{output_Mode=1;}
+        if(keyDown(buttonRight)){
+          output_Mode++;
         }
-        if(keyDown(buttonBack)){output_Mode = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(keyDown(buttonLeft)){
+          output_Mode--;
+        }
+        output_Mode = output_Mode % 3;
+        if(keyDown(buttonBack)){output_Mode = intTemp;cancelledMessageLCD();setMenuPage=0;} 
         if(keyDown(buttonSelect)){saveSettings();setMenuPage=0;savedMessageLCD();}
       }     
     }
