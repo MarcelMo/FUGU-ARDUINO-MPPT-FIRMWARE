@@ -15,7 +15,7 @@ void System_Processes(){
                    (int)( 255*(temperature-temperatureFan)/(temperatureFanMax-temperatureFan))
                  )
              );
-      ledcWrite(fanpwmChannel,fanPWM);
+      ledcWrite(FAN,fanPWM);
     }                                                             	   //DYNAMIC PWM COOLING MODE (3-PIN FAN)
   }
   else{digitalWrite(FAN,LOW);}                                         //Fan Disabled
